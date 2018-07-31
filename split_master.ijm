@@ -17,10 +17,16 @@ function save_tif(channels, output, filename) {
     }
 }
 
-function split_save(input, output, filename) {
+function split_save(input, output, filename, low_res) {
     open(input + filename);
     run("Split Channels");
-    channels = newArray("C1-", "C2-", "C3-");
+    if(low_res) {
+        channels = newArray("C2-");
+    }
+    else {
+        channels = newArray("C1-", "C2-", "C3-");
+    }
+
     save_nrrd(channels, output, filename);
     channel = newArray("C2-");
     save_tif(channel, output, filename);
@@ -39,7 +45,11 @@ dir = getFileList(input);
 for (i = 0; i < dir.length; i++) {
     files = getFileList(input + dir[i]);
     for (j = 0; j<files.length; j++){
-        split_save(input+dir[i], input+dir[i], files[j]);
+        low_res=false;
+        if(indexOf(files[j], "_25.tif")>=0) {
+            low_res=true;
+        }
+        split_save(input+dir[i], input+dir[i], files[j], low_res);
     }
 }
 print("ending");
