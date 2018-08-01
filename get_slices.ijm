@@ -1,11 +1,10 @@
 
-file = File.open("/home/lab/random_code/slices.txt");
-//file=File.open("/home/emily/registration/analysis/slices.txt");
+file=File.open("/home/emily/registration/analysis/slices.txt");
 
 setBatchMode(true);
-print("starting");
-input="/home/lab/registration/images/";
-output="/home/lab/registration/images/";
+
+print("start");
+input="/home/emily/registration/images/";
 dir_list = getFileList(input);
 
 for (i=0; i<dir_list.length; i++) {
@@ -17,4 +16,4 @@ for (i=0; i<dir_list.length; i++) {
             }
 	}
     }
-
+print("end");
