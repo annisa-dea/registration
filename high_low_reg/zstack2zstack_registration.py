@@ -41,13 +41,13 @@ def command_multi_iteration(method):
 #%%
 
 ei_25 = ei.ExperimentInfo(pixelX=1024, pixelY=1024, pixelSizeUM=0.6060606, Zsteps=cmd_args[1], stepSizeUM=1, res=[0.6060606,0.6060606,1], ts=1, frameRate=1)
-ei_63 = ei.ExperimentInfo(pixelX=1024, pixelY=1024, pixelSizeUM=0.2405002, Zsteps=cmd_args[2], stepSizeUM=1, res=[0.2405002,0.2405002,1], ts=1, frameRate=1)
+ei_40 = ei.ExperimentInfo(pixelX=1024, pixelY=1024, pixelSizeUM=0.3787879, Zsteps=cmd_args[2], stepSizeUM=1, res=[0.3787879,0.3787879,1], ts=1, frameRate=1)
 
 fixed_filepath = cmd_args[3];
 moving_filepath = cmd_args[4];
 
 zstack_c = rs.RegistrationStack(nImage=imread(moving_filepath),
-                                expInfo=ei_63)
+                                expInfo=ei_40)
 zstack_d = rs.RegistrationStack(nImage=imread(fixed_filepath),
                                 expInfo=ei_25)
 
@@ -111,6 +111,7 @@ resampler = sitk.ResampleImageFilter()
 resampler.SetReferenceImage(fixed)
 resampler.SetInterpolator(sitk.sitkLinear)
 resampler.SetTransform(globalTx)
+#change moving
 out = resampler.Execute(moving)
 
 sitk.WriteTransform(globalTx, os.path.join(outfolder, 'tform_subvol_000.tfm'))
@@ -118,79 +119,12 @@ sitk.WriteImage(out, os.path.join(outfolder, 'global_resampled.tif'))
 sitk.WriteImage(fixed, os.path.join(outfolder, 'fixed.tif'))
 
 #%%
-
-
-#%%
-win = [256, 256, 21]
-padding = [0, 0, 0]
-subvol = sv.SubVolume(siz=fixed.GetSize(), win=win, padding=padding)
-
-all_transforms = [None] * subvol.numSubVol
-piecewise_resampled = np.zeros(zstack_d.nImage.shape)
-
-#%%
-
-for idx in range(subvol.numSubVol):
-    subvol_mask = zstack_d.get_subvolume_mask(subvol.cornerListUL[idx], subvol.cornerListRL[idx])
-    R.SetMetricFixedMask(subvol_mask * zstack_d.get_nonzero_mask())
-    R.SetMetricMovingMask(zstack_c.get_nonzero_mask())
-
-    R = sitk.ImageRegistrationMethod()
-    #R.SetMetricAsANTSNeighborhoodCorrelation(4)
-    R.SetMetricAsMattesMutualInformation(numberOfHistogramBins=100)
-    R.SetMetricSamplingStrategy(R.RANDOM)
-    R.SetMetricSamplingPercentage(0.8)
-    R.SetOptimizerScalesFromPhysicalShift()
-    R.SetInterpolator(sitk.sitkLinear)
-    R.SetOptimizerAsGradientDescent(learningRate=1.0,
-                                    numberOfIterations=300,
-                                    convergenceMinimumValue=1e-4,
-                                    convergenceWindowSize=10,
-                                    estimateLearningRate=R.EachIteration)
-
-    subvolTx = sitk.Euler3DTransform(globalTx)
-    R.SetInitialTransform(subvolTx)
-
-    #R.AddCommand(sitk.sitkIterationEvent, lambda: command_iteration(R))
-    #R.AddCommand(sitk.sitkMultiResolutionIterationEvent, lambda: command_multi_iteration(R))
-
-    R.Execute(fixed, moving)
-
-    all_transforms[idx] = subvolTx
-    resampler = sitk.ResampleImageFilter()
-    resampler.SetReferenceImage(fixed)
-    resampler.SetInterpolator(sitk.sitkLinear)
-    resampler.SetTransform(subvolTx)
-    subvol_img = resampler.Execute(moving)
-    subvol_nimg = sitk.GetArrayFromImage(subvol_img)
-
-    # save subvolume transform
-    sitk.WriteTransform(subvolTx,
-                        os.path.join(outfolder, 'tform_subvol_{0}.tfm'.format(str(idx + 1).zfill(3))))
-
-    # # save resampled image (wrt subvolume)
-    # sitk.WriteImage(subvol_img,
-    #                 os.path.join(outfolder, 'tform_subvol_{0}.tif'.format(str(idx + 1).zfill(3))))
-
-    (xmin, ymin, zmin) = subvol.cornerListUL[idx]
-    (xmax, ymax, zmax) = subvol.cornerListRL[idx]
-
-    piecewise_resampled[zmin:zmax, ymin:ymax, xmin:xmax] = subvol_nimg[zmin:zmax, ymin:ymax, xmin:xmax]
-
-sitk.WriteImage(sitk.Cast(sitk.GetImageFromArray(piecewise_resampled), sitk.sitkFloat32),
-                os.path.join(outfolder, 'piecewise_resampled.tif'))
-
-#%%
-sitk_piecewise_resampled = rs.RegistrationStack(nImage=np.float32(piecewise_resampled),
-                                                expInfo=ei.ExperimentInfo(filepath=fixed_filepath))
-
-simFilter = sitk.SimilarityIndexImageFilter()
-simFilter.Execute(fixed, sitk_piecewise_resampled.sImage)
-print('similarity: fixed & piecewise_resampled')
-print(simFilter.GetSimilarityIndex())
-
-simFilter.Execute(fixed, out)
-print('similarity: fixed & global_resampled')
-print(simFilter.GetSimilarityIndex())
+i=7
+while (i<cmd_args.length): 
+    zstack_c = rs.RegistrationStack(nImage=imread(cmd_args[i]),
+                                expInfo=ei_40)
+    moving = sitk.Cast(zstack_c.sImage, sitk.sitkFloat32)
+    out = resampler.Execute(moving)
+    sitk.WriteImage(out, os.path.join(outfolder, 'global_resampled_other_channel.tif'))
 
 

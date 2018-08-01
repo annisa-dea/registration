@@ -25,7 +25,7 @@ then
 #align and reslice higher res stack to lower res stack
 echo "--------STARTING HIGH TO LOW RES REGISTRATION-------------------"
 stak2stak_reg () {
-    python $REGDIR/analysis/high_low_reg/zstack2zstack_registration.py $1 $2 $3 $4 $5 $6
+    python $REGDIR/analysis/high_low_reg/zstack2zstack_registration.py $1 $2 $3 $4 $5 $6 $7 $8
 }
 
 while IFS='' read -r line || [[ -n "$line" ]]; do
@@ -56,7 +56,7 @@ do
         fi
         
     done
-        stak2stak_reg $slices_25 $slices_40 $fixed_filepath $moving_filepath $dir "xformed"
+        stak2stak_reg $slices_25 $slices_40 $fixed_filepath $moving_filepath $dir "xformed" $other_channel
 done
 
 echo "----------DONE WITH HIGH TO LOW RES REGISTRATION----------------"
@@ -66,15 +66,15 @@ fi
 echo "------------GENERATING INITIAL 25x nc82 REGISTRATIONS------------"
 #move 25x nrrd files to registration images folder
 cd $IMDIR
-for dir in $IMDIR;
+for dir in "$IMDIR/*";
 do
-    mv ./$dir/*25_01.nrrd "$REGDIR/channel_registration/images"
+    mv $dir/*25_01.nrrd "$REGDIR/channel_registration/images"
 done
 
 #GENERATE INITIAL AFFINE AND WARP REGISTRATIONS FOR ALL BRAINS
 cd $REGDIR/channel_registration
 
-"/home/emily/Fiji.app/bin/cmtk/munger" -b "/home/emily/Fiji.app/bin/cmtk" -a -w -r 01  -X 26 -C 8 -G 80 -R 4 -A '--accuracy 0.4' -W '--accuracy 0.4'  -T 8 -s "ref_brain/REF-1.nrrd" images
+"/home/emily/Fiji.app/bin/cmtk/munger" -b "/home/emily/Fiji.app/bin/cmtk" -a -w -r 01  -X 26 -C 8 -G 80 -R 4 -A '--accuracy 0.4' -W '--accuracy 0.4'  -T 8 -s "refbrain/REF-1.nrrd" images
 
 
 echo "-------------------DONE WITH INITIAL REGISTRATION-------------------"
@@ -84,7 +84,7 @@ then
 echo "----------------REFORMATTING OTHER 40x CHANNELS---------------------"
 
 #TRANSFORM 40x CHANNELS INTO 25x IMAGE SPACE 
-for dir in "$REGDIR/images"; do
+for dir in "$IMDIR/*"; do
     cd $dir
     reformat C1 and C3 40x from "./" with stuff from "./transforms/xformed"
     save to "./transforms"
@@ -93,10 +93,10 @@ done
 #TRANSFORM 40x CHANNELS W 25x AFFINE & WARP REGISTRATIONS
 
 cd "/home/emily/registration/channel_registration/Registration/affine"
-affine=getFileList()
+affine=( * )
 
 cd "/home/emily/registration/channel_registration/Registration/warp"
-warp=getFileList()
+warp=( * )
 
 #$1 = affine or warp
 

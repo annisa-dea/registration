@@ -4,7 +4,7 @@
 function save_nrrd(channels, output, filename) {
     for (i=0; i < channels.length; i++){
         selectWindow(channels[i] + filename);
-        run("Nrrd ... ", "nrrd=" + output + channels[i] + substring(filename, 0, 4) + "_01.nrrd");
+        run("Nrrd ... ", "nrrd=" + output + channels[i] + substring(filename, 0, 12) + "_01.nrrd");
     }
     
 }
@@ -12,7 +12,7 @@ function save_nrrd(channels, output, filename) {
 function save_tif(channels, output, filename) {
     for (i=0; i<channels.length; i++){
         selectWindow(channels[i] + filename);
-        saveAs("Tiff", output + substring(filename,0,4) + channels[i] + ".tif");
+        saveAs("Tiff", output + substring(filename,0,12) + channels[i] + ".tif");
 
     }
 }
@@ -53,10 +53,11 @@ dir = getFileList(input);
 
 for (i = 0; i < dir.length; i++) {
     files = getFileList(input + dir[i]);
+    Array.print(files);
     row=split(channel_row[i]);
     for (j = 0; j<files.length; j++){
         low_res=false;
-        if(indexOf(files[j], "_25.tif")>=0) {
+        if(indexOf(files[j], "25.tif")>=0) {
             low_res=true;
         }
         split_save(input+dir[i], input+dir[i], files[j], low_res, row);

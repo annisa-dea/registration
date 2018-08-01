@@ -55,7 +55,7 @@ zstack_d = rs.RegistrationStack(nImage=imread(fixed_filepath),
 #folder = '/mnt/storage/Remy/2018 analysis/2018-07-01_analysis'
 #tform_folder = os.path.join(folder, 'transforms', 'zstack_d2b_registration')
 #outfolder = tform_folder
-folder = "/home/emily/registration/images/";
+folder = "/home/emily/registration/images/1";
 tform_folder = os.path.join(folder, 'transforms', "xforms")
 outfolder = tform_folder
 
@@ -180,7 +180,7 @@ sitk.WriteImage(sitk.Cast(sitk.GetImageFromArray(piecewise_resampled), sitk.sitk
 
 #%%
 sitk_piecewise_resampled = rs.RegistrationStack(nImage=np.float32(piecewise_resampled),
-                                                expInfo=ei.ExperimentInfo(filepath=fixed_filepath))
+                                                expInfo=ei_25)
 
 simFilter = sitk.SimilarityIndexImageFilter()
 simFilter.Execute(fixed, sitk_piecewise_resampled.sImage)
