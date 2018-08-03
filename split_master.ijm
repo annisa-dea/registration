@@ -1,6 +1,7 @@
 //20180728
 //emily 
 
+
 function save_nrrd(channels, output, filename) {
     for (i=0; i < channels.length; i++){
         selectWindow(channels[i] + filename);
@@ -30,6 +31,7 @@ function split_save(input, output, filename, low_res, row) {
     save_nrrd(channels, output, filename);
     channel=newArray("C2-");
     save_tif(channel, output, filename);
+    save_tif(row, output, filename);
     close();
     
 }
@@ -48,6 +50,7 @@ input = "/home/emily/registration/images/";
 output = "/home/emily/registration/images/";
 
 setBatchMode(true);
+
 
 dir = getFileList(input);
 

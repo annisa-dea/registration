@@ -25,6 +25,7 @@ cmd_args=sys.argv
 print("COMMANDS PASSED TO REG CODE")
 print(cmd_args)
 
+
 #%env SITK_SHOW_COMMAND /home/remy/Fiji.app/ImageJ-linux64
 
 def command_iteration(method):
@@ -119,12 +120,19 @@ sitk.WriteImage(out, os.path.join(outfolder, 'global_resampled.tif'))
 sitk.WriteImage(fixed, os.path.join(outfolder, 'fixed.tif'))
 
 #%%
-i=7
-while (i<cmd_args.length): 
-    zstack_c = rs.RegistrationStack(nImage=imread(cmd_args[i]),
+
+channels=[cmd_args[7]]
+channels = channels[0].split()
+i=0
+while (i<len(channels)): 
+    print("LKJSEWRKLJESRLJKHERSJKL")
+    print(channels[i])
+    zstack_c = rs.RegistrationStack(nImage=imread(channels[i]),
                                 expInfo=ei_40)
     moving = sitk.Cast(zstack_c.sImage, sitk.sitkFloat32)
     out = resampler.Execute(moving)
-    sitk.WriteImage(out, os.path.join(outfolder, 'global_resampled_other_channel.tif'))
+    transforms_folder=os.path.join(folder, 'transforms')
+    sitk.WriteImage(out, os.path.join(transforms_folder, 'global_resampled' + str(i) + '.tif'))
+    i=i+1
 
 
