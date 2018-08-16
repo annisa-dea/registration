@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 
 #get command line args
 cmd_args=sys.argv
-print("COMMANDS PASSED TO REG CODE")
+print("ARGS PASSED TO REG CODE")
 print(cmd_args)
 
 
@@ -41,8 +41,8 @@ def command_multi_iteration(method):
 
 #%%
 
-ei_25 = ei.ExperimentInfo(pixelX=1024, pixelY=1024, pixelSizeUM=0.6060606, Zsteps=cmd_args[1], stepSizeUM=1, res=[0.6060606,0.6060606,1], ts=1, frameRate=1)
-ei_40 = ei.ExperimentInfo(pixelX=1024, pixelY=1024, pixelSizeUM=0.3787879, Zsteps=cmd_args[2], stepSizeUM=1, res=[0.3787879,0.3787879,1], ts=1, frameRate=1)
+ei_25 = ei.ExperimentInfo(pixelX=1024, pixelY=1024, pixelSizeUM=0.6060606, Zsteps=cmd_args[1], stepSizeUM=0.9999286, res=[0.6060606,0.6060606,0.9999286], ts=1, frameRate=1)
+ei_40 = ei.ExperimentInfo(pixelX=1024, pixelY=1024, pixelSizeUM=0.3787879, Zsteps=cmd_args[2], stepSizeUM=0.9999286, res=[0.3787879,0.3787879,0.9999286], ts=1, frameRate=1)
 
 fixed_filepath = cmd_args[3];
 moving_filepath = cmd_args[4];
@@ -65,8 +65,11 @@ outfolder = tform_folder
 if not os.path.exists(outfolder):
     os.makedirs(outfolder)
 
-fixed = sitk.Cast(zstack_d.sImage, sitk.sitkFloat32)
-moving = sitk.Cast(zstack_c.sImage, sitk.sitkFloat32)
+#fixed = sitk.Cast(zstack_d.sImage, sitk.sitkFloat32)
+#moving = sitk.Cast(zstack_c.sImage, sitk.sitkFloat32)
+
+#fixed = zstack_d.sImage
+#moving = zstack_c.sImage
 
 #%%
 
@@ -75,14 +78,17 @@ moving = sitk.Cast(zstack_c.sImage, sitk.sitkFloat32)
 
 #%%
 
-initialTx = sitk.CenteredTransformInitializer(fixed, moving, sitk.Euler3DTransform(),
-                                              sitk.CenteredTransformInitializerFilter.GEOMETRY)
+#initialTx = sitk.CenteredTransformInitializer(fixed, moving, sitk.Euler3DTransform(),
+#                                              sitk.CenteredTransformInitializerFilter.GEOMETRY)
+#initialTx = sitk.CenteredTransformInitializer(fixed, moving, sitk.AffineTransform(fixed.GetDimension()))
+initialTx = sitk.CenteredTransformInitializer(zstack_d.sImage, zstack_c.sImage, sitk.AffineTransform(3))
 
 R = sitk.ImageRegistrationMethod()
 R.SetMetricFixedMask(zstack_d.get_nonzero_mask())
 R.SetMetricMovingMask(zstack_c.get_nonzero_mask())
-R.SetMetricAsMattesMutualInformation(numberOfHistogramBins=100)
-R.SetMetricSamplingPercentage(0.8)
+#R.SetMetricAsMattesMutualInformation(numberOfHistogramBins=100)
+R.SetMetricAsANTSNeighborhoodCorrelation(4)
+R.SetMetricSamplingPercentage(0.5)
 
 R.SetOptimizerAsGradientDescent(learningRate=1.0,
                                 numberOfIterations=300,
@@ -95,24 +101,29 @@ R.SetSmoothingSigmasPerLevel(smoothingSigmas=[2, 1, 0])
 R.SetOptimizerScalesFromPhysicalShift()
 R.SetInterpolator(sitk.sitkLinear)
 
-globalTx = sitk.Euler3DTransform(initialTx)
-R.SetInitialTransform(globalTx)
+#globalTx = sitk.Euler3DTransform(initialTx)
+globalTx = initialTx
+R.SetInitialTransform(initialTx)
 
-R.AddCommand(sitk.sitkIterationEvent, lambda: command_iteration(R))
+R.AddCommand(sitk.sitkIterationEvent, lambda: command_iteration(R)) 
 R.AddCommand(sitk.sitkMultiResolutionIterationEvent, lambda: command_multi_iteration(R))
-R.Execute(fixed, moving)
+#R.Execute(fixed, moving)
+R.Execute(sitk.Cast(zstack_d.sImage, sitk.sitkFloat32), sitk.Cast(zstack_c.sImage, sitk.sitkFloat32))
 
 print("-------")
 print(globalTx)
 print("Optimizer stop condition: {0}".format(R.GetOptimizerStopConditionDescription()))
 print(" Iteration: {0}".format(R.GetOptimizerIteration()))
 print(" Metric value: {0}".format(R.GetMetricValue()))
+#is this correct?
+#maybe fixed=zstack_d.sImage
+fixed=sitk.Cast(zstack_d.sImage, sitk.sitkFloat32)
+moving=sitk.Cast(zstack_c.sImage, sitk.sitkFloat32)
 
 resampler = sitk.ResampleImageFilter()
 resampler.SetReferenceImage(fixed)
 resampler.SetInterpolator(sitk.sitkLinear)
 resampler.SetTransform(globalTx)
-#change moving
 out = resampler.Execute(moving)
 
 sitk.WriteTransform(globalTx, os.path.join(outfolder, 'tform_subvol_000.tfm'))
@@ -120,12 +131,12 @@ sitk.WriteImage(out, os.path.join(outfolder, 'global_resampled.tif'))
 sitk.WriteImage(fixed, os.path.join(outfolder, 'fixed.tif'))
 
 #%%
-
+#
 channels=[cmd_args[7]]
 channels = channels[0].split()
 i=0
 while (i<len(channels)): 
-    print("LKJSEWRKLJESRLJKHERSJKL")
+    print("Channel being reformatted")
     print(channels[i])
     zstack_c = rs.RegistrationStack(nImage=imread(channels[i]),
                                 expInfo=ei_40)
