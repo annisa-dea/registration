@@ -1,3 +1,4 @@
 Images to be used for template brain should be placed here
 NRRD format
 Should be named in following format, NAMEOFFIRSTBRAIN_01.nrrd NAMEOFSECONDBRAIN_01.nrrd etc. 
+automated in auto_tempbrain.sh
