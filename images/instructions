@@ -1,0 +1,3 @@
+stacks from confocal go here
+Create a folder for each brain, name it yyyymmdd## , ex, 2018071901 
+put 25x and 40x multichannel stack in each folder, naming convention yyyymmdd##25.tif yyyymmdd##40.tif etc.
