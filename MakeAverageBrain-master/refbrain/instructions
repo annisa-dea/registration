@@ -1,0 +1,3 @@
+select a brain to be the refbrain for first pass 
+Should be named in following format, NAMEOFBRAIN-1.nrrd 
+this step is automated in auto_tempbrain.sh
