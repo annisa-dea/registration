@@ -2,6 +2,7 @@
 #20170726
 #emily
 
+
 CMTKDIR="/home/emily/cmtk"
 REGDIR="/home/emily/registration"
 IMDIR="/home/emily/registration/images"
